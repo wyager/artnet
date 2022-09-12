@@ -89,17 +89,22 @@ instance Serialize NodeReport where
     get = NodeReport <$> getByteString 64
     put = putByteString . getNodeReport
 
+data ArtPollReply_ = ArtPollReply_ IPv4 Port6454 VersInfo Switch OEM UBEAVersion Status ESTA ShortName LongName NodeReport NumPorts PortTypes GoodInput GoodOutput AcnPriority SwMacro SwRemote Spare Spare Spare Style MAC IPv4  BindIndex Status GoodOutput Status UID Filler deriving (Generic, Serialize)
+
+data ArtPoll_ = ArtPoll_ Flags TargetPortAddr TargetPortAddr deriving (Generic, Serialize)
+
+data ArtDMX_ = ArtDMX_ Sequence Physical Universe Data deriving (Generic, Serialize)
 
 data ArtCommand = 
     -- A poll command | used to discover devices on the network
-    ArtPoll Flags TargetPortAddr TargetPortAddr |
+    ArtPoll  ArtPoll_ |
 
     -- A reply to the poll command | it contains device status information
-    ArtPollReply IPv4 Port6454 VersInfo Switch OEM UBEAVersion Status ESTA ShortName LongName NodeReport NumPorts PortTypes GoodInput GoodOutput AcnPriority SwMacro SwRemote Spare Spare Spare Style MAC IPv4  BindIndex Status GoodOutput Status UID Filler |
+    ArtPollReply  ArtPollReply_ |
 
 
     -- An ArtDmx data packet. Used to send actual data to a node in the network
-    ArtDMX Sequence Physical Universe Data  
+    ArtDMX ArtDMX_
 
 data Proto = V14
 instance Serialize Proto where
@@ -128,28 +133,17 @@ instance Serialize ArtCommand where
     put cmd = do
         putByteString header
         case cmd of
-            ArtDMX a b c d -> do
-                put OpArtDMX >> put V14
-                put a >> put b >> put c >> put d 
-            ArtPoll a b c -> do
-                put OpArtPoll >> put V14
-                put a >> put b >> put c
-            ArtPollReply a b c d e f g h i j k l m n o p q r s t u v w x y z aa ab ac ad -> do
-                put OpArtPoll >> put V14
-                put a >> put b >> put c >> put d >> put e >> put f >> put g >> put h >> put i >> put j >> put k >> put l >> put m >> put n >> put o >> put p >> put q >> put r >> put s >> put t >> put u >> put v >> put w >> put x >> put y >> put z >> put aa >> put ab >> put ac >> put ad 
-       
-            
+            ArtDMX dmx -> put OpArtDMX >> put V14 >> put dmx
+            ArtPoll poll -> put OpArtPoll >> put V14 >> put poll
+            ArtPollReply apr -> put OpArtPoll >> put V14 >> put apr
     get = do
-        hdr <- getByteString 8
-        guard (header == hdr)
+        guard . (header ==) =<< getByteString 8
         opcode <- get
         V14 <- get
         case opcode of
-            OpArtPoll -> do
-                ArtPoll <$> get <*> get <*> get
-            OpArtPollReply -> ArtPollReply <$> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get <*> get  <*> get <*> get <*> get <*> get <*> get <*> get
-            OpArtDMX -> do 
-                ArtDMX <$> get <*> get <*> get <*> get
+            OpArtPoll -> ArtPoll <$> get
+            OpArtPollReply -> ArtPollReply <$> get 
+            OpArtDMX -> ArtDMX <$> get 
         
 
 someFunc :: IO ()
