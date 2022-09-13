@@ -15,12 +15,19 @@ serve addr go = E.bracket open NS.close go
     where
     open = E.bracketOnError (NS.openSocket addr) NS.close $ \sock -> do
         -- Set socket options here
+        NS.withFdSocket sock NS.setCloseOnExecIfNeeded
         NS.setSocketOption sock NS.ReuseAddr 1
         NS.setSocketOption sock NS.Broadcast 1
+        NS.bind sock $ NS.addrAddress addr
+        --NS.listen sock 4
         return sock
 
-handler :: NS.Socket -> IO void
-handler sock = forever $ do
+handler :: NS.SockAddr -> NS.Socket -> IO void
+handler broadcast sock = forever $ do
+    -- TODO: Read is working, write is not working
+    len <- NSB.sendTo sock (Ser.encode $ Lib.ArtPoll $ Lib.ArtPoll_ 0 Nothing) broadcast
+    print len
+
     -- Just in case people use mega-jumbo packets in the future
     bs <- NSB.recv sock 100000 
     case Ser.decode bs of
@@ -30,10 +37,12 @@ handler sock = forever $ do
 data Opts = Opts {hostname :: String} deriving (Generic, Show, ParseRecord)
 
 main :: IO ()
-main = do
+main = NS.withSocketsDo $ do
     Opts host <- getRecord "Server"
-    let hints = NS.defaultHints {NS.addrSocketType = NS.Datagram}
+    let hints = NS.defaultHints {NS.addrSocketType = NS.Datagram, NS.addrFlags = [NS.AI_PASSIVE]}
     addrs <- NS.getAddrInfo (Just hints) (Just host) (Just "6454")
     case addrs of
-        [one] -> serve one handler 
+        [one] -> do
+            print one
+            serve one (handler (NS.addrAddress one))
         others -> fail $ "Expected one address: " ++ show others

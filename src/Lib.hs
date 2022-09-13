@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, DerivingVia, LambdaCase, DeriveGeneric, DeriveAnyClass #-}
 module Lib
-    (ArtCommand(..)
+    (ArtCommand(..), ArtPoll_(..), ArtPollReply_(..), ArtDMX_(..)
      
     ) where
 
@@ -11,6 +11,7 @@ import qualified Data.ByteString as BS
 import Data.Word (Word8, Word16, Word32, Word64)
 import GHC.Generics
 import Control.Monad (guard)
+import Data.Bits (Bits, testBit)
 
 
 
@@ -27,7 +28,9 @@ instance Serialize U16BE where
 
 newtype Sequence = Sequence Word8 deriving Serialize via Word8 deriving Show
 newtype Physical = Physical Word8 deriving Serialize via Word8 deriving Show
-newtype Flags = Flags Word8 deriving Serialize via Word8 deriving Show
+newtype Flags = Flags Word8 deriving (Serialize, Eq, Bits, Num) via Word8 deriving Show
+flagsTargeted :: Flags -> Bool
+flagsTargeted = (`testBit` 5)
 newtype UBEAVersion = UBEAVersion Word8 deriving Serialize via Word8 deriving Show
 newtype DiagPriority = DiagPriority Word8 deriving Serialize via Word8 deriving Show
 newtype Universe = Universe Word16 deriving Serialize via U16LE deriving Show
@@ -36,10 +39,10 @@ newtype TargetPortAddr = TargetPortAddr Word16 deriving Serialize via U16BE deri
 newtype Data = Data ByteString deriving Show
 instance Serialize Data where
     put (Data bs) = do
-        putWord16le $ fromIntegral (BS.length bs)
+        putWord16be $ fromIntegral (BS.length bs)
         putByteString bs
     get = do
-        len <- getWord16le 
+        len <- getWord16be
         Data <$> getByteString (fromIntegral len)
 
 
@@ -92,7 +95,19 @@ instance Serialize NodeReport where
 
 data ArtPollReply_ = ArtPollReply_ IPv4 Port6454 VersInfo Switch OEM UBEAVersion Status ESTA ShortName LongName NodeReport NumPorts PortTypes GoodInput GoodOutput AcnPriority SwMacro SwRemote Spare Spare Spare Style MAC IPv4  BindIndex Status GoodOutput Status UID Filler deriving (Generic, Serialize, Show)
 
-data ArtPoll_ = ArtPoll_ Flags TargetPortAddr TargetPortAddr deriving (Generic, Serialize, Show)
+data ArtPoll_ = ArtPoll_ Flags (Maybe (TargetPortAddr, TargetPortAddr)) deriving (Show)
+instance Serialize ArtPoll_ where
+    get = do
+        flags <- get
+        target <- if flagsTargeted flags
+            then Just <$> ((,) <$> get <*> get)
+            else return Nothing
+        return $ ArtPoll_ flags target
+    -- TODO: Break out flags so we can't represent a thing with
+    -- targeted = false and targets = Just ...
+    put (ArtPoll_ f t) = put f >> mapM_ (\(a,b) -> put a >> put b) t
+        
+        
 
 data ArtDMX_ = ArtDMX_ Sequence Physical Universe Data deriving (Generic, Serialize, Show)
 
