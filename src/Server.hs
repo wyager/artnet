@@ -35,7 +35,7 @@ listen sock = forever $ do
 
 tell :: NS.SockAddr -> NS.Socket -> IO ()
 tell broadcast sock = do
-  len <- NSB.sendTo sock (Ser.encode $ Lib.ArtPoll $ Lib.ArtPoll_ 0 0 Nothing) broadcast
+  len <- NSB.sendTo sock (Ser.encode $ Lib.ArtPoll $ Lib.defaultArtPoll) broadcast
   print len
 
 getAddr :: String -> IO NS.AddrInfo

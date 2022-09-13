@@ -3,19 +3,22 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Lib
   ( ArtCommand (..),
     ArtPoll_ (..),
+    defaultArtPoll,
     ArtPollReply_ (..),
     ArtDMX_ (..),
   )
 where
 
 import Control.Monad (guard)
-import Data.Bits (Bits, testBit)
+import Data.Bits (bit, testBit, (.|.))
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
+import Data.Maybe (isJust)
 import Data.Serialize
   ( Serialize,
     get,
@@ -51,13 +54,6 @@ newtype Sequence = Sequence Word8
 newtype Physical = Physical Word8
   deriving (Serialize) via Word8
   deriving (Show)
-
-newtype Flags = Flags Word8
-  deriving (Serialize, Eq, Bits, Num) via Word8
-  deriving (Show)
-
-flagsTargeted :: Flags -> Bool
-flagsTargeted = (`testBit` 5)
 
 newtype UBEAVersion = UBEAVersion Word8
   deriving (Serialize) via Word8
@@ -177,21 +173,50 @@ instance Serialize NodeReport where
 
 data ArtPollReply_ = ArtPollReply_ IPv4 Port6454 VersInfo Switch OEM UBEAVersion Status ESTA ShortName LongName NodeReport NumPorts PortTypes GoodInput GoodOutput AcnPriority SwMacro SwRemote Spare Spare Spare Style MAC IPv4 BindIndex Status GoodOutput Status UID Filler deriving (Generic, Serialize, Show)
 
-data ArtPoll_ = ArtPoll_ Flags DiagPriority (Maybe (TargetPortAddr, TargetPortAddr)) deriving (Show)
+data ArtPoll_ = ArtPoll_ {disableVLC :: Bool, diagUnicast :: Bool, sendMeDiag :: Bool, sendMeContinuousReplies :: Bool, diagPriority :: DiagPriority, target :: Maybe (TargetPortAddr, TargetPortAddr)} deriving (Show)
+
+defaultArtPoll :: ArtPoll_
+defaultArtPoll =
+  ArtPoll_
+    { disableVLC = False,
+      diagUnicast = False,
+      sendMeDiag = False,
+      sendMeContinuousReplies = False,
+      diagPriority = 0,
+      target = Nothing
+    }
 
 instance Serialize ArtPoll_ where
   get = do
-    flags <- get
-    dp <- get
+    flags <- getWord8
+    let test = testBit flags
+        targeted = test 5
+        disableVLC = test 4
+        diagUnicast = test 3
+        sendMeDiag = test 2
+        sendMeContinuousReplies = test 1
+    diagPriority <- get
     target <-
-      if flagsTargeted flags
+      if targeted
         then Just <$> ((,) <$> get <*> get)
         else return Nothing
-    return $ ArtPoll_ flags dp target
+    return $ ArtPoll_ {..}
 
   -- TODO: Break out flags so we can't represent a thing with
   -- targeted = false and targets = Just ...
-  put (ArtPoll_ f dp t) = put f >> put dp >> mapM_ (\(a, b) -> put a >> put b) t
+  put (ArtPoll_ disableVLC diagUnicast sendMeDiag sendMeContinuousReplies diagPriority target) = do
+    let set n cond = if cond then bit n else 0
+        flags =
+          foldl
+            (.|.)
+            (0 :: Word8)
+            [ set 5 (isJust target),
+              set 4 disableVLC,
+              set 3 diagUnicast,
+              set 2 sendMeDiag,
+              set 1 sendMeContinuousReplies
+            ]
+    put flags >> put diagPriority >> mapM_ (\(a, b) -> put a >> put b) target
 
 data ArtDMX_ = ArtDMX_ Sequence Physical Universe Data deriving (Generic, Serialize, Show)
 
