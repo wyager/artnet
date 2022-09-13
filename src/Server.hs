@@ -9,6 +9,7 @@ import Options.Generic (ParseRecord, getRecord)
 import Control.Monad (forever)
 import qualified Lib
 import qualified Data.Serialize  as Ser
+import Data.Word(Word32)
 
 serve :: NS.AddrInfo -> (NS.Socket -> IO a) -> IO a
 serve addr go = E.bracket open NS.close go
@@ -24,7 +25,7 @@ serve addr go = E.bracket open NS.close go
 
 handler :: NS.SockAddr -> NS.Socket -> IO void
 handler broadcast sock = forever $ do
-    -- TODO: Read is working, write is not working
+    -- TODO: Can only send to 10.20.1.103, can only read from 10.20.1.255. Split it up
     len <- NSB.sendTo sock (Ser.encode $ Lib.ArtPoll $ Lib.ArtPoll_ 0 Nothing) broadcast
     print len
 
@@ -36,6 +37,9 @@ handler broadcast sock = forever $ do
 
 data Opts = Opts {hostname :: String} deriving (Generic, Show, ParseRecord)
 
+me :: Word32
+me = 0x0A1401FF
+
 main :: IO ()
 main = NS.withSocketsDo $ do
     Opts host <- getRecord "Server"
@@ -44,5 +48,5 @@ main = NS.withSocketsDo $ do
     case addrs of
         [one] -> do
             print one
-            serve one (handler (NS.addrAddress one))
+            serve one (handler (NS.SockAddrInet 6454 me))
         others -> fail $ "Expected one address: " ++ show others
