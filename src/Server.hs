@@ -15,12 +15,10 @@ serve :: NS.AddrInfo -> (NS.Socket -> IO a) -> IO a
 serve addr go = E.bracket open NS.close go
     where
     open = E.bracketOnError (NS.openSocket addr) NS.close $ \sock -> do
-        -- Set socket options here
         NS.withFdSocket sock NS.setCloseOnExecIfNeeded
         NS.setSocketOption sock NS.ReuseAddr 1
         NS.setSocketOption sock NS.Broadcast 1
         NS.bind sock $ NS.addrAddress addr
-        --NS.listen sock 4
         return sock
 
 listen ::  NS.Socket -> IO void
@@ -36,17 +34,15 @@ tell broadcast sock = do
     len <- NSB.sendTo sock (Ser.encode $ Lib.ArtPoll $ Lib.ArtPoll_ 0 0 Nothing) broadcast
     print len
 
-
-data Opts = Opts {broadcastAddr :: String, localAddr :: String} deriving (Generic, Show, ParseRecord)
-
-
 getAddr :: String -> IO NS.AddrInfo
 getAddr name = do
     let hints = NS.defaultHints {NS.addrSocketType = NS.Datagram, NS.addrFlags = [NS.AI_PASSIVE]}
     addrs <- NS.getAddrInfo (Just hints) (Just name) (Just "6454")
     case addrs of
         [one] -> return one
-        others -> fail $ "Expected one address: " ++ show others
+        others -> fail $ "Expected precisely one network address, but found these: " ++ show others
+
+data Opts = Opts {broadcastAddr :: String, localAddr :: String} deriving (Generic, Show, ParseRecord)
 
 main :: IO ()
 main = NS.withSocketsDo $ do
@@ -55,7 +51,8 @@ main = NS.withSocketsDo $ do
     local <- getAddr local_
     let listener = serve broadcast listen
         teller = serve local (tell $ NS.addrAddress broadcast)
-    Async.withAsync listener $ \listened ->
-        Async.withAsync teller $ \told ->
-            Async.wait told >> Async.wait listened
+    Async.withAsync listener $ \listened -> do
+        Async.withAsync teller $ \told -> do
+            (_, err) <- Async.waitAny ["Teller died" <$ told, "Listener died" <$ listened]
+            fail err
     
