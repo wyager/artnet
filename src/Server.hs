@@ -9,7 +9,7 @@ import Options.Generic (ParseRecord, getRecord)
 import Control.Monad (forever)
 import qualified Lib
 import qualified Data.Serialize  as Ser
-import Data.Word(Word32)
+import qualified Control.Concurrent.Async as Async
 
 serve :: NS.AddrInfo -> (NS.Socket -> IO a) -> IO a
 serve addr go = E.bracket open NS.close go
@@ -23,30 +23,40 @@ serve addr go = E.bracket open NS.close go
         --NS.listen sock 4
         return sock
 
-handler :: NS.SockAddr -> NS.Socket -> IO void
-handler broadcast sock = forever $ do
-    -- TODO: Can only send to 10.20.1.103, can only read from 10.20.1.255. Split it up
-    len <- NSB.sendTo sock (Ser.encode $ Lib.ArtPoll $ Lib.ArtPoll_ 0 Nothing) broadcast
-    print len
-
+listen ::  NS.Socket -> IO void
+listen sock = forever $ do
     -- Just in case people use mega-jumbo packets in the future
     bs <- NSB.recv sock 100000 
     case Ser.decode bs of
         Left err -> putStrLn err
         Right (cmd :: Lib.ArtCommand) -> print cmd
 
-data Opts = Opts {hostname :: String} deriving (Generic, Show, ParseRecord)
+tell :: NS.SockAddr -> NS.Socket -> IO ()
+tell broadcast sock = do
+    -- TODO: Can only send to 10.20.1.103, can only read from 10.20.1.255. Split it up
+    len <- NSB.sendTo sock (Ser.encode $ Lib.ArtPoll $ Lib.ArtPoll_ 0 0 Nothing) broadcast
+    print len
 
-me :: Word32
-me = 0x0A1401FF
+
+data Opts = Opts {broadcastAddr :: String, localAddr :: String} deriving (Generic, Show, ParseRecord)
+
+
+getAddr :: String -> IO NS.AddrInfo
+getAddr name = do
+    let hints = NS.defaultHints {NS.addrSocketType = NS.Datagram, NS.addrFlags = [NS.AI_PASSIVE]}
+    addrs <- NS.getAddrInfo (Just hints) (Just name) (Just "6454")
+    case addrs of
+        [one] -> return one
+        others -> fail $ "Expected one address: " ++ show others
 
 main :: IO ()
 main = NS.withSocketsDo $ do
-    Opts host <- getRecord "Server"
-    let hints = NS.defaultHints {NS.addrSocketType = NS.Datagram, NS.addrFlags = [NS.AI_PASSIVE]}
-    addrs <- NS.getAddrInfo (Just hints) (Just host) (Just "6454")
-    case addrs of
-        [one] -> do
-            print one
-            serve one (handler (NS.SockAddrInet 6454 me))
-        others -> fail $ "Expected one address: " ++ show others
+    Opts broadcast_ local_ <- getRecord "Server"
+    broadcast <- getAddr broadcast_
+    local <- getAddr local_
+    let listener = serve broadcast listen
+        teller = serve local (tell $ NS.addrAddress broadcast)
+    Async.withAsync listener $ \listened ->
+        Async.withAsync teller $ \told ->
+            Async.wait told >> Async.wait listened
+    

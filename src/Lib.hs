@@ -32,7 +32,7 @@ newtype Flags = Flags Word8 deriving (Serialize, Eq, Bits, Num) via Word8 derivi
 flagsTargeted :: Flags -> Bool
 flagsTargeted = (`testBit` 5)
 newtype UBEAVersion = UBEAVersion Word8 deriving Serialize via Word8 deriving Show
-newtype DiagPriority = DiagPriority Word8 deriving Serialize via Word8 deriving Show
+newtype DiagPriority = DiagPriority Word8 deriving (Serialize, Num) via Word8 deriving Show
 newtype Universe = Universe Word16 deriving Serialize via U16LE deriving Show
 newtype TargetPortAddr = TargetPortAddr Word16 deriving Serialize via U16BE deriving Show
 
@@ -95,17 +95,18 @@ instance Serialize NodeReport where
 
 data ArtPollReply_ = ArtPollReply_ IPv4 Port6454 VersInfo Switch OEM UBEAVersion Status ESTA ShortName LongName NodeReport NumPorts PortTypes GoodInput GoodOutput AcnPriority SwMacro SwRemote Spare Spare Spare Style MAC IPv4  BindIndex Status GoodOutput Status UID Filler deriving (Generic, Serialize, Show)
 
-data ArtPoll_ = ArtPoll_ Flags (Maybe (TargetPortAddr, TargetPortAddr)) deriving (Show)
+data ArtPoll_ = ArtPoll_ Flags DiagPriority (Maybe (TargetPortAddr, TargetPortAddr)) deriving (Show)
 instance Serialize ArtPoll_ where
     get = do
         flags <- get
+        dp <- get
         target <- if flagsTargeted flags
             then Just <$> ((,) <$> get <*> get)
             else return Nothing
-        return $ ArtPoll_ flags target
+        return $ ArtPoll_ flags dp target
     -- TODO: Break out flags so we can't represent a thing with
     -- targeted = false and targets = Just ...
-    put (ArtPoll_ f t) = put f >> mapM_ (\(a,b) -> put a >> put b) t
+    put (ArtPoll_ f dp t) = put f >> put dp >> mapM_ (\(a,b) -> put a >> put b) t
         
         
 
