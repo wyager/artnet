@@ -33,7 +33,6 @@ listen sock = forever $ do
 
 tell :: NS.SockAddr -> NS.Socket -> IO ()
 tell broadcast sock = do
-    -- TODO: Can only send to 10.20.1.103, can only read from 10.20.1.255. Split it up
     len <- NSB.sendTo sock (Ser.encode $ Lib.ArtPoll $ Lib.ArtPoll_ 0 0 Nothing) broadcast
     print len
 
