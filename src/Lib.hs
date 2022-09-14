@@ -4,6 +4,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Lib
   ( ArtCommand (..),
@@ -11,6 +12,7 @@ module Lib
     defaultArtPoll,
     ArtPollReply_ (..),
     ArtDMX_ (..),
+    Data(..)
   )
 where
 
@@ -35,7 +37,7 @@ import Data.Serialize
 import Data.Word (Word16, Word32, Word64, Word8)
 import GHC.Generics
 
-newtype U16LE = U16LE {u16le :: Word16} deriving (Show)
+newtype U16LE = U16LE {u16le :: Word16} deriving (Show) deriving newtype Num
 
 instance Serialize U16LE where
   put = putWord16le . u16le
@@ -48,11 +50,11 @@ instance Serialize U16BE where
   get = U16BE <$> getWord16be
 
 newtype Sequence = Sequence Word8
-  deriving (Serialize) via Word8
+  deriving (Serialize, Num) via Word8
   deriving (Show)
 
 newtype Physical = Physical Word8
-  deriving (Serialize) via Word8
+  deriving (Serialize, Num) via Word8
   deriving (Show)
 
 newtype UBEAVersion = UBEAVersion Word8
@@ -64,7 +66,7 @@ newtype DiagPriority = DiagPriority Word8
   deriving (Show)
 
 newtype Universe = Universe Word16
-  deriving (Serialize) via U16LE
+  deriving (Serialize, Num) via U16LE
   deriving (Show)
 
 newtype TargetPortAddr = TargetPortAddr Word16

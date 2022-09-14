@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Lib.Pixel
       Server
   other-modules:
       Paths_artnet
