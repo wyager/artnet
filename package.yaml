@@ -23,8 +23,8 @@ dependencies:
 - base >= 4.7 && < 5
 - cereal
 - bytestring
-# todo - delete me
 - network
+- containers
 
 ghc-options:
 - -Wall

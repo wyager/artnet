@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Lib.Data
       Lib.Pixel
       Server
   other-modules:
@@ -37,6 +38,7 @@ library
       base >=4.7 && <5
     , bytestring
     , cereal
+    , containers
     , network
   default-language: Haskell2010
 
@@ -53,6 +55,7 @@ executable artnet-exe
     , base >=4.7 && <5
     , bytestring
     , cereal
+    , containers
     , network
     , optparse-generic
   default-language: Haskell2010
@@ -70,5 +73,6 @@ test-suite artnet-test
     , base >=4.7 && <5
     , bytestring
     , cereal
+    , containers
     , network
   default-language: Haskell2010
