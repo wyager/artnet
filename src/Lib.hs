@@ -9,7 +9,8 @@
 module Lib
   ( ArtCommand (..),
     ArtPoll_ (..),
-    defaultArtPoll, defaultArtPollReply,
+    defaultArtPoll,
+    defaultArtPollReply,
     ArtPollReply_ (..),
     ArtDMX_ (..),
     Data (..),
@@ -37,16 +38,16 @@ import Data.Serialize
 import Data.Word (Word16, Word64, Word8)
 import GHC.Generics
 
-
-
-newtype U16LE = U16LE {u16le :: Word16} deriving (Show)
+newtype U16LE = U16LE {u16le :: Word16}
+  deriving (Show)
   deriving newtype (Num)
 
 instance Serialize U16LE where
   put = putWord16le . u16le
   get = U16LE <$> getWord16le
 
-newtype U16BE = U16BE {u16be :: Word16} deriving (Show) deriving newtype (Num )
+newtype U16BE = U16BE {u16be :: Word16} deriving (Show)
+  deriving newtype (Num)
 
 instance Serialize U16BE where
   put = putWord16be . u16be
@@ -177,48 +178,77 @@ instance Serialize NodeReport where
   get = NodeReport <$> getByteString 64
   put = putByteString . getNodeReport
 
-data ArtPollReply_
-  = ArtPollReply_ 
-      { nodeIP :: IPv4
-      , nodePort :: Port6454
-      , nodeVersion:: VersInfo
-      , nodeSwitch :: Switch
-      , nodeOEM :: OEM
-      , nodeUBEA :: UBEAVersion
-      , nodeStatus1 :: Status
-      , nodeESTA :: ESTA
-      , nodeShortName :: ShortName
-      , nodeLongName :: LongName
-      , nodeReport :: NodeReport
-      , nodeNumPorts :: NumPorts
-      , nodePortTypes :: PortTypes
-      , nodeInputStatus :: GoodInput
-      , nodeOutputStatus :: GoodOutput
-      , nodeSwIn :: SwIn
-      , nodeSwOut :: SwOut
-      , nodeSACNPriority:: AcnPriority
-      , nodeSwMacro :: SwMacro
-      , nodeSwRemote:: SwRemote
-      , nodeSpare1:: Spare
-      , nodeSpare2:: Spare
-      , nodeSpare3 :: Spare
-      , nodeStyle :: Style
-      , nodeMAC :: MAC
-      , nodeBindIP :: IPv4
-      , nodeBindIndex :: BindIndex
-      , nodeStatus2 :: Status
-      , nodeGoodOutputB:: GoodOutput
-      , nodeStatus3 :: Status
-      , nodeRDMNetUID :: UID
-      , nodeFiller :: Filler 
-      }
+data ArtPollReply_ = ArtPollReply_
+  { nodeIP :: IPv4,
+    nodePort :: Port6454,
+    nodeVersion :: VersInfo,
+    nodeSwitch :: Switch,
+    nodeOEM :: OEM,
+    nodeUBEA :: UBEAVersion,
+    nodeStatus1 :: Status,
+    nodeESTA :: ESTA,
+    nodeShortName :: ShortName,
+    nodeLongName :: LongName,
+    nodeReport :: NodeReport,
+    nodeNumPorts :: NumPorts,
+    nodePortTypes :: PortTypes,
+    nodeInputStatus :: GoodInput,
+    nodeOutputStatus :: GoodOutput,
+    nodeSwIn :: SwIn,
+    nodeSwOut :: SwOut,
+    nodeSACNPriority :: AcnPriority,
+    nodeSwMacro :: SwMacro,
+    nodeSwRemote :: SwRemote,
+    nodeSpare1 :: Spare,
+    nodeSpare2 :: Spare,
+    nodeSpare3 :: Spare,
+    nodeStyle :: Style,
+    nodeMAC :: MAC,
+    nodeBindIP :: IPv4,
+    nodeBindIndex :: BindIndex,
+    nodeStatus2 :: Status,
+    nodeGoodOutputB :: GoodOutput,
+    nodeStatus3 :: Status,
+    nodeRDMNetUID :: UID,
+    nodeFiller :: Filler
+  }
   deriving (Generic, Serialize, Show)
 
 defaultArtPollReply :: ArtPollReply_
-defaultArtPollReply = ArtPollReply_ (IPv4 1 2 3 4) Port6454 (VersInfo 0) (Switch 0 0) (OEM 0) 
-    (UBEAVersion 0) (Status 0) (ESTA 0) (ShortName "0123456789abcdefgh") (LongName $ BS.concat ["xy" | _ <- [0..31::Int]]) (NodeReport $ BS.concat ["ab" | _ <- [0..31::Int]]) (NumPorts 0) (PortTypes 0 0 0 0) (GoodInput 0 0 0 0) 
-    (GoodOutput 0 0 0 0) (SwIn 0 0 0 0) (SwOut 0 0 0 0) (AcnPriority 0) (SwMacro 0) (SwRemote 0) (Spare 1) (Spare 2) (Spare 3) (Style 0) (MAC 1 2 3 4 5 6) (IPv4 7 8 9 10) (BindIndex 0) (Status 0) (GoodOutput 0 0 0 0) (Status 0) (UID 11 12 13 14 15 16) (Filler 1 2)
-
+defaultArtPollReply =
+  ArtPollReply_
+    (IPv4 1 2 3 4)
+    Port6454
+    (VersInfo 0)
+    (Switch 0 0)
+    (OEM 0)
+    (UBEAVersion 0)
+    (Status 0)
+    (ESTA 0)
+    (ShortName "0123456789abcdefgh")
+    (LongName $ BS.concat ["xy" | _ <- [0 .. 31 :: Int]])
+    (NodeReport $ BS.concat ["ab" | _ <- [0 .. 31 :: Int]])
+    (NumPorts 0)
+    (PortTypes 0 0 0 0)
+    (GoodInput 0 0 0 0)
+    (GoodOutput 0 0 0 0)
+    (SwIn 0 0 0 0)
+    (SwOut 0 0 0 0)
+    (AcnPriority 0)
+    (SwMacro 0)
+    (SwRemote 0)
+    (Spare 1)
+    (Spare 2)
+    (Spare 3)
+    (Style 0)
+    (MAC 1 2 3 4 5 6)
+    (IPv4 7 8 9 10)
+    (BindIndex 0)
+    (Status 0)
+    (GoodOutput 0 0 0 0)
+    (Status 0)
+    (UID 11 12 13 14 15 16)
+    (Filler 1 2)
 
 data ArtPoll_ = ArtPoll_ {disableVLC :: Bool, diagUnicast :: Bool, sendMeDiag :: Bool, sendMeContinuousReplies :: Bool, diagPriority :: DiagPriority, target :: Maybe (TargetPortAddr, TargetPortAddr)} deriving (Show)
 

@@ -11,29 +11,36 @@ import Data.Serialize (Serialize, get, getWord16be, put, putWord16be)
 import Data.Word (Word16)
 import GHC.Generics (Generic)
 
-newtype Dimmer a = Dimmer a deriving newtype (Eq, Show, Num, Fractional, Serialize)
+newtype Dimmer a = Dimmer a
+  deriving newtype (Eq, Show, Num, Fractional, Serialize)
   deriving stock (Functor)
 
-newtype Temp a = Temp a deriving newtype (Eq, Show, Num, Fractional, Serialize)
+newtype Temp a = Temp a
+  deriving newtype (Eq, Show, Num, Fractional, Serialize)
   deriving stock (Functor)
 
-newtype Tint a = Tint a deriving newtype (Eq, Show, Num, Fractional, Serialize)
+newtype Tint a = Tint a
+  deriving newtype (Eq, Show, Num, Fractional, Serialize)
   deriving stock (Functor)
 
-newtype Fader a = Fader a deriving newtype (Eq, Show, Num, Fractional, Serialize)
+newtype Fader a = Fader a
+  deriving newtype (Eq, Show, Num, Fractional, Serialize)
   deriving stock (Functor)
 
-data RGBW a = RGBW a a a a deriving stock (Eq, Show, Functor, Generic)
+data RGBW a = RGBW a a a a
+  deriving stock (Eq, Show, Functor, Generic)
   deriving anyclass (Serialize)
 
 -- TODO - figure out how strobe works with multipiple pixels. One at end of all pixels?
-newtype Strobe a = Strobe a deriving newtype (Eq, Show, Num, Fractional, Serialize)
+newtype Strobe a = Strobe a
+  deriving newtype (Eq, Show, Num, Fractional, Serialize)
   deriving stock (Functor)
 
 -- Depending on what precision mode you are using,
 -- the values will either be all 8-bit or a mix of 16-bit and 8-bit,
 -- hence the need for "hi" precision and "low" precision type params.
-data CCTRGBWPx lo hi = CCTRGBWPx (Dimmer hi) (Temp hi) (Tint hi) (Fader lo) (RGBW hi) deriving stock (Eq, Show, Functor, Generic)
+data CCTRGBWPx lo hi = CCTRGBWPx (Dimmer hi) (Temp hi) (Tint hi) (Fader lo) (RGBW hi)
+  deriving stock (Eq, Show, Functor, Generic)
   deriving anyclass (Serialize)
 
 mapLo :: (lo -> lo2) -> CCTRGBWPx lo hi -> CCTRGBWPx lo2 hi
