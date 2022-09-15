@@ -34,12 +34,10 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wextra -Werror
   build-depends:
-      async
-    , base >=4.7 && <5
+      base >=4.7 && <5
     , bytestring
     , cereal
     , network
-    , optparse-generic
   default-language: Haskell2010
 
 executable artnet-exe
@@ -69,10 +67,8 @@ test-suite artnet-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wextra -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       artnet
-    , async
     , base >=4.7 && <5
     , bytestring
     , cereal
     , network
-    , optparse-generic
   default-language: Haskell2010

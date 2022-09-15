@@ -46,7 +46,8 @@ instance Serialize U16LE where
   put = putWord16le . u16le
   get = U16LE <$> getWord16le
 
-newtype U16BE = U16BE {u16be :: Word16} deriving (Show)
+newtype U16BE = U16BE {u16be :: Word16}
+  deriving (Show)
   deriving newtype (Num)
 
 instance Serialize U16BE where
