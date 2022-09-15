@@ -1,18 +1,18 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Lib
   ( ArtCommand (..),
     ArtPoll_ (..),
-    defaultArtPoll,
+    defaultArtPoll, defaultArtPollReply,
     ArtPollReply_ (..),
     ArtDMX_ (..),
-    Data(..)
+    Data (..),
   )
 where
 
@@ -34,16 +34,19 @@ import Data.Serialize
     putWord16le,
     putWord8,
   )
-import Data.Word (Word16, Word32, Word64, Word8)
+import Data.Word (Word16, Word64, Word8)
 import GHC.Generics
 
-newtype U16LE = U16LE {u16le :: Word16} deriving (Show) deriving newtype Num
+
+
+newtype U16LE = U16LE {u16le :: Word16} deriving (Show)
+  deriving newtype (Num)
 
 instance Serialize U16LE where
   put = putWord16le . u16le
   get = U16LE <$> getWord16le
 
-newtype U16BE = U16BE {u16be :: Word16} deriving (Show)
+newtype U16BE = U16BE {u16be :: Word16} deriving (Show) deriving newtype (Num )
 
 instance Serialize U16BE where
   put = putWord16be . u16be
@@ -70,7 +73,7 @@ newtype Universe = Universe Word16
   deriving (Show)
 
 newtype TargetPortAddr = TargetPortAddr Word16
-  deriving (Serialize) via U16BE
+  deriving (Serialize, Num) via U16BE
   deriving (Show)
 
 newtype Data = Data ByteString deriving (Show)
@@ -99,7 +102,8 @@ data SwIn = SwIn Word8 Word8 Word8 Word8 deriving (Generic, Serialize, Show)
 
 data SwOut = SwOut Word8 Word8 Word8 Word8 deriving (Generic, Serialize, Show)
 
-data Filler = Filler Word64 Word64 Word64 Word32 Word8 deriving (Generic, Serialize, Show)
+-- Spec says 15 bytes, but from wireshark it looks like 16? Just leaving it as 16
+data Filler = Filler Word64 Word64 deriving (Generic, Serialize, Show)
 
 data Port6454 = Port6454 deriving (Show)
 
@@ -173,7 +177,48 @@ instance Serialize NodeReport where
   get = NodeReport <$> getByteString 64
   put = putByteString . getNodeReport
 
-data ArtPollReply_ = ArtPollReply_ IPv4 Port6454 VersInfo Switch OEM UBEAVersion Status ESTA ShortName LongName NodeReport NumPorts PortTypes GoodInput GoodOutput AcnPriority SwMacro SwRemote Spare Spare Spare Style MAC IPv4 BindIndex Status GoodOutput Status UID Filler deriving (Generic, Serialize, Show)
+data ArtPollReply_
+  = ArtPollReply_ 
+      { nodeIP :: IPv4
+      , nodePort :: Port6454
+      , nodeVersion:: VersInfo
+      , nodeSwitch :: Switch
+      , nodeOEM :: OEM
+      , nodeUBEA :: UBEAVersion
+      , nodeStatus1 :: Status
+      , nodeESTA :: ESTA
+      , nodeShortName :: ShortName
+      , nodeLongName :: LongName
+      , nodeReport :: NodeReport
+      , nodeNumPorts :: NumPorts
+      , nodePortTypes :: PortTypes
+      , nodeInputStatus :: GoodInput
+      , nodeOutputStatus :: GoodOutput
+      , nodeSwIn :: SwIn
+      , nodeSwOut :: SwOut
+      , nodeSACNPriority:: AcnPriority
+      , nodeSwMacro :: SwMacro
+      , nodeSwRemote:: SwRemote
+      , nodeSpare1:: Spare
+      , nodeSpare2:: Spare
+      , nodeSpare3 :: Spare
+      , nodeStyle :: Style
+      , nodeMAC :: MAC
+      , nodeBindIP :: IPv4
+      , nodeBindIndex :: BindIndex
+      , nodeStatus2 :: Status
+      , nodeGoodOutputB:: GoodOutput
+      , nodeStatus3 :: Status
+      , nodeRDMNetUID :: UID
+      , nodeFiller :: Filler 
+      }
+  deriving (Generic, Serialize, Show)
+
+defaultArtPollReply :: ArtPollReply_
+defaultArtPollReply = ArtPollReply_ (IPv4 1 2 3 4) Port6454 (VersInfo 0) (Switch 0 0) (OEM 0) 
+    (UBEAVersion 0) (Status 0) (ESTA 0) (ShortName "0123456789abcdefgh") (LongName $ BS.concat ["xy" | _ <- [0..31::Int]]) (NodeReport $ BS.concat ["ab" | _ <- [0..31::Int]]) (NumPorts 0) (PortTypes 0 0 0 0) (GoodInput 0 0 0 0) 
+    (GoodOutput 0 0 0 0) (SwIn 0 0 0 0) (SwOut 0 0 0 0) (AcnPriority 0) (SwMacro 0) (SwRemote 0) (Spare 1) (Spare 2) (Spare 3) (Style 0) (MAC 1 2 3 4 5 6) (IPv4 7 8 9 10) (BindIndex 0) (Status 0) (GoodOutput 0 0 0 0) (Status 0) (UID 11 12 13 14 15 16) (Filler 1 2)
+
 
 data ArtPoll_ = ArtPoll_ {disableVLC :: Bool, diagUnicast :: Bool, sendMeDiag :: Bool, sendMeContinuousReplies :: Bool, diagPriority :: DiagPriority, target :: Maybe (TargetPortAddr, TargetPortAddr)} deriving (Show)
 
@@ -231,9 +276,9 @@ data ArtCommand
     ArtDMX ArtDMX_
   deriving (Show)
 
-data Proto = V14 deriving (Show)
+data ProtoVersion = V14 deriving (Show)
 
-instance Serialize Proto where
+instance Serialize ProtoVersion where
   put V14 = putWord8 0 >> putWord8 14
   get = do
     0 <- getWord8
@@ -263,12 +308,12 @@ instance Serialize ArtCommand where
     case cmd of
       ArtDMX dmx -> put OpArtDMX >> put V14 >> put dmx
       ArtPoll poll -> put OpArtPoll >> put V14 >> put poll
-      ArtPollReply apr -> put OpArtPoll >> put V14 >> put apr
+      ArtPollReply apr -> put OpArtPollReply >> put apr
   get = do
+    let v14 = do V14 <- get; return ()
     guard . (header ==) =<< getByteString 8
     opcode <- get
-    V14 <- get
     case opcode of
-      OpArtPoll -> ArtPoll <$> get
+      OpArtPoll -> v14 >> ArtPoll <$> get
       OpArtPollReply -> ArtPollReply <$> get
-      OpArtDMX -> ArtDMX <$> get
+      OpArtDMX -> v14 >> ArtDMX <$> get
