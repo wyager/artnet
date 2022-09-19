@@ -38,28 +38,20 @@ instance Serialize U16LE where
   put = putWord16le . u16le
   get = U16LE <$> getWord16le
 
-newtype U16BE = U16BE {u16be :: Word16}
-  deriving (Show)
-  deriving newtype (Num)
-
-instance Serialize U16BE where
-  put = putWord16be . u16be
-  get = U16BE <$> getWord16be
-
 newtype Sequence = Sequence Word8
-  deriving (Serialize, Num) via Word8
+  deriving newtype (Serialize, Num)
   deriving (Show)
 
 newtype Physical = Physical Word8
-  deriving (Serialize, Num) via Word8
+  deriving newtype (Serialize, Num)
   deriving (Show)
 
 newtype UBEAVersion = UBEAVersion Word8
-  deriving (Serialize) via Word8
+  deriving newtype (Serialize)
   deriving (Show)
 
 newtype DiagPriority = DiagPriority Word8
-  deriving (Serialize, Num) via Word8
+  deriving newtype (Serialize, Num)
   deriving (Show)
 
 newtype Universe = Universe Word16
@@ -67,7 +59,7 @@ newtype Universe = Universe Word16
   deriving (Show)
 
 newtype TargetPortAddr = TargetPortAddr Word16
-  deriving (Serialize, Num) via U16BE
+  deriving newtype (Serialize, Num)
   deriving (Show)
 
 newtype Data = Data ByteString deriving (Show)
@@ -108,49 +100,49 @@ instance Serialize Port6454 where
     return Port6454
 
 newtype VersInfo = VersInfo Word16
-  deriving (Serialize) via U16BE
+  deriving newtype (Serialize)
   deriving (Show)
 
 newtype OEM = OEM Word16
-  deriving (Serialize) via U16BE
+  deriving newtype (Serialize)
   deriving (Show)
 
 newtype ESTA = ESTA Word16
-  deriving (Serialize) via U16BE
+  deriving newtype (Serialize)
   deriving (Show)
 
 newtype NumPorts = NumPorts Word16
-  deriving (Serialize) via U16BE
+  deriving newtype (Serialize)
   deriving (Show)
 
 data Switch = Switch Word8 Word8 deriving (Generic, Serialize, Show)
 
 newtype Status = Status Word8
-  deriving (Serialize) via Word8
+  deriving newtype (Serialize)
   deriving (Show)
 
 newtype AcnPriority = AcnPriority Word8
-  deriving (Serialize) via Word8
+  deriving newtype (Serialize)
   deriving (Show)
 
 newtype SwMacro = SwMacro Word8
-  deriving (Serialize) via Word8
+  deriving newtype (Serialize)
   deriving (Show)
 
 newtype SwRemote = SwRemote Word8
-  deriving (Serialize) via Word8
+  deriving newtype (Serialize)
   deriving (Show)
 
 newtype Spare = Spare Word8
-  deriving (Serialize) via Word8
+  deriving newtype (Serialize)
   deriving (Show)
 
 newtype Style = Style Word8
-  deriving (Serialize) via Word8
+  deriving newtype (Serialize)
   deriving (Show)
 
 newtype BindIndex = BindIndex Word8
-  deriving (Serialize) via Word8
+  deriving newtype (Serialize)
   deriving (Show)
 
 newtype ShortName = ShortName {getShortName :: ByteString} deriving (Show)
