@@ -5,7 +5,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Lib.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), cast, W16Be (..), mapLo) where
+module Lib.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), cast, W16Be (..), mapLo, rounded) where
 
 import Data.Serialize (Serialize, get, getWord16be, put, putWord16be)
 import Data.Word (Word16)
@@ -55,3 +55,7 @@ instance Serialize W16Be where
 
 cast :: forall i o. (RealFrac i, Integral o, Bounded o) => i -> o
 cast x = round (x * fromIntegral (maxBound :: o))
+
+rounded :: forall lo' hi' lo hi . (RealFrac lo, RealFrac hi, Integral lo', Bounded lo', Integral hi', Bounded hi') =>
+    CCTRGBWPx lo hi -> CCTRGBWPx lo' hi'
+rounded = fmap cast . mapLo cast

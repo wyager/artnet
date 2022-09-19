@@ -12,7 +12,7 @@ import qualified Data.Serialize as Ser
 import Lib (Data (..))
 import Prelude hiding (head)
 
-newtype Outgoing = Outgoing (Map Int ByteString)
+newtype Outgoing = Outgoing (Map Int ByteString) deriving Show
 
 fresh :: Outgoing
 fresh = Outgoing Map.empty
