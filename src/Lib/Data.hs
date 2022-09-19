@@ -1,5 +1,3 @@
-{-# LANGUAGE GADTs #-}
-
 module Lib.Data (Outgoing, fresh, add, finalize) where
 
 import Control.Monad (replicateM_, when)
@@ -12,7 +10,7 @@ import qualified Data.Serialize as Ser
 import Lib (Data (..))
 import Prelude hiding (head)
 
-newtype Outgoing = Outgoing (Map Int ByteString) deriving Show
+newtype Outgoing = Outgoing (Map Int ByteString) deriving (Show)
 
 fresh :: Outgoing
 fresh = Outgoing Map.empty

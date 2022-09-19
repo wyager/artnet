@@ -33,6 +33,19 @@ library
       Paths_artnet
   hs-source-dirs:
       src
+  default-extensions:
+      DeriveAnyClass
+      DeriveFunctor
+      DeriveGeneric
+      DerivingStrategies
+      DerivingVia
+      GADTs
+      GeneralizedNewtypeDeriving
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      TypeApplications
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wextra -Werror
   build-depends:
       base >=4.7 && <5
@@ -48,6 +61,19 @@ executable artnet-exe
       Paths_artnet
   hs-source-dirs:
       app
+  default-extensions:
+      DeriveAnyClass
+      DeriveFunctor
+      DeriveGeneric
+      DerivingStrategies
+      DerivingVia
+      GADTs
+      GeneralizedNewtypeDeriving
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      TypeApplications
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wextra -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       artnet
@@ -67,6 +93,19 @@ test-suite artnet-test
       Paths_artnet
   hs-source-dirs:
       test
+  default-extensions:
+      DeriveAnyClass
+      DeriveFunctor
+      DeriveGeneric
+      DerivingStrategies
+      DerivingVia
+      GADTs
+      GeneralizedNewtypeDeriving
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      TypeApplications
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wextra -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       artnet

@@ -26,6 +26,20 @@ dependencies:
 - network
 - containers
 
+default-extensions:
+- DeriveAnyClass
+- DeriveFunctor
+- DeriveGeneric 
+- DerivingStrategies
+- DerivingVia
+- GADTs
+- GeneralizedNewtypeDeriving
+- LambdaCase
+- OverloadedStrings 
+- RecordWildCards
+- ScopedTypeVariables
+- TypeApplications 
+
 ghc-options:
 - -Wall
 - -Wcompat

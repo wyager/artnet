@@ -1,10 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module Lib.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), cast, mapLo, rounded) where
 
 import Data.Serialize (Serialize)
@@ -48,6 +41,9 @@ mapLo fun (CCTRGBWPx a b c d e) = CCTRGBWPx a b c (fmap fun d) e
 cast :: forall i o. (RealFrac i, Integral o, Bounded o) => i -> o
 cast x = round (x * fromIntegral (maxBound :: o))
 
-rounded :: forall lo' hi' lo hi . (RealFrac lo, RealFrac hi, Integral lo', Bounded lo', Integral hi', Bounded hi') =>
-    CCTRGBWPx lo hi -> CCTRGBWPx lo' hi'
+rounded ::
+  forall lo' hi' lo hi.
+  (RealFrac lo, RealFrac hi, Integral lo', Bounded lo', Integral hi', Bounded hi') =>
+  CCTRGBWPx lo hi ->
+  CCTRGBWPx lo' hi'
 rounded = fmap cast . mapLo cast
