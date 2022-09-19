@@ -9,7 +9,7 @@ module Main (main) where
 
 import qualified Control.Concurrent.Async as Async
 import qualified Control.Concurrent.Chan as Chan
-import Data.Word (Word8)
+import Data.Word (Word8, Word16)
 import GHC.Generics (Generic)
 import qualified Lib
 import qualified Lib.Pixel as Px
@@ -23,8 +23,10 @@ packets = [poll, reply, dmx]
     poll = Lib.ArtPoll Lib.defaultArtPoll
     reply = Lib.ArtPollReply Lib.defaultArtPollReply
     dmx = Lib.ArtDMX $ Lib.ArtDMX_ 0 0 0 packet
+    -- Create a CCT/RGBW pixel with Double [0,1] values
     px cct = Px.CCTRGBWPx @Double @Double 0.7 (Px.Temp cct) 0 0 (Px.RGBW 0 0 0 0)
-    tube1 :: [Px.CCTRGBWPx Word8 Px.W16Be] = (Px.rounded . px) <$> [0, (1 / 15) .. 1]
+    -- Convert those Double values to 16-bit words, as appropriate 
+    tube1 :: [Px.CCTRGBWPx Word8 Word16] = (Px.rounded . px) <$> [0, (1 / 15) .. 1]
     tube2 = reverse tube1
     packet = case Data.finalize <$> (Data.add 1 tube1 Data.fresh >>= Data.add 257 tube2) of
         Nothing -> error "Couldn't fit data in DMX packet"

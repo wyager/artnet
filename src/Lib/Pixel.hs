@@ -5,10 +5,9 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Lib.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), cast, W16Be (..), mapLo, rounded) where
+module Lib.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), cast, mapLo, rounded) where
 
-import Data.Serialize (Serialize, get, getWord16be, put, putWord16be)
-import Data.Word (Word16)
+import Data.Serialize (Serialize)
 import GHC.Generics (Generic)
 
 newtype Dimmer a = Dimmer a
@@ -45,13 +44,6 @@ data CCTRGBWPx lo hi = CCTRGBWPx (Dimmer hi) (Temp hi) (Tint hi) (Fader lo) (RGB
 
 mapLo :: (lo -> lo2) -> CCTRGBWPx lo hi -> CCTRGBWPx lo2 hi
 mapLo fun (CCTRGBWPx a b c d e) = CCTRGBWPx a b c (fmap fun d) e
-
--- Word16 that is specified to be serialized big-endian
-newtype W16Be = W16Be {getWord16 :: Word16} deriving newtype (Eq, Ord, Show, Num, Integral, Real, Enum, Bounded)
-
-instance Serialize W16Be where
-  put = putWord16be . getWord16
-  get = W16Be <$> getWord16be
 
 cast :: forall i o. (RealFrac i, Integral o, Bounded o) => i -> o
 cast x = round (x * fromIntegral (maxBound :: o))
