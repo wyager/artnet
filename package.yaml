@@ -39,6 +39,7 @@ default-extensions:
 - RecordWildCards
 - ScopedTypeVariables
 - TypeApplications 
+- NumericUnderscores
 
 ghc-options:
 - -Wall
