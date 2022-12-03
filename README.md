@@ -1,1 +1,1 @@
-# artnet
+# Artnet implementation for Haskell
