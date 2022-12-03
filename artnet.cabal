@@ -25,9 +25,9 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
-      Lib.Data
-      Lib.Pixel
+      Artnet
+      Artnet.Data
+      Artnet.Pixel
       Server
   other-modules:
       Paths_artnet

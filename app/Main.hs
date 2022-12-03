@@ -5,21 +5,21 @@ import qualified Control.Concurrent.Chan as Chan
 import Control.Concurrent (threadDelay)
 import Data.Word (Word16, Word8)
 import GHC.Generics (Generic)
-import qualified Lib
-import qualified Lib.Data as Data
-import qualified Lib.Pixel as Px
+import qualified Artnet
+import qualified Artnet.Data as Data
+import qualified Artnet.Pixel as Px
 import Options.Generic (ParseRecord, getRecord)
 import qualified Server
 
-packets :: [Lib.ArtCommand]
+packets :: [Artnet.ArtCommand]
 packets = [poll, reply]
   where
-    poll = Lib.ArtPoll Lib.defaultArtPoll
-    reply = Lib.ArtPollReply Lib.defaultArtPollReply
+    poll = Artnet.ArtPoll Artnet.defaultArtPoll
+    reply = Artnet.ArtPollReply Artnet.defaultArtPollReply
    
 data Opts = Opts {broadcastAddr :: String, localAddr :: String} deriving (Generic, Show, ParseRecord)
 
-colorizer :: (Lib.ArtCommand -> IO ()) -> IO void
+colorizer :: (Artnet.ArtCommand -> IO ()) -> IO void
 colorizer send = go $ cycle $ (Px.rounded . px) <$> temps
     where
     go :: [Px.CCTRGBWPx Word8 Word16] -> IO void
@@ -31,7 +31,7 @@ colorizer send = go $ cycle $ (Px.rounded . px) <$> temps
             packet = case Data.finalize <$> (Data.add 0 tube1 Data.fresh >>= Data.add 256 tube2) of
                 Nothing -> error "Couldn't fit data in DMX packet"
                 Just pkt -> pkt
-            cmd = Lib.ArtDMX $ Lib.ArtDMX_ 0 0 0 packet
+            cmd = Artnet.ArtDMX $ Artnet.ArtDMX_ 0 0 0 packet
         send cmd
         threadDelay 10_000
         go colors

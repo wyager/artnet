@@ -1,4 +1,4 @@
-module Lib
+module Artnet
   ( ArtCommand (..),
     ArtPoll_ (..),
     defaultArtPoll,

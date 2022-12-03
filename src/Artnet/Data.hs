@@ -1,4 +1,4 @@
-module Lib.Data (Outgoing, fresh, add, finalize) where
+module Artnet.Data (Outgoing, fresh, add, finalize) where
 
 import Control.Monad (replicateM_, when)
 import Data.ByteString (ByteString)
@@ -7,7 +7,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Serialize (Serialize)
 import qualified Data.Serialize as Ser
-import Lib (Data (..))
+import Artnet (Data (..))
 import Prelude hiding (head)
 
 newtype Outgoing = Outgoing (Map Int ByteString) deriving (Show)

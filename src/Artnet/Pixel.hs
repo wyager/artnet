@@ -1,4 +1,4 @@
-module Lib.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), cast, mapLo, rounded) where
+module Artnet.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), cast, mapLo, rounded) where
 
 import Data.Serialize (Serialize)
 import GHC.Generics (Generic)
