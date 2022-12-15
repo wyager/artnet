@@ -23,10 +23,13 @@ listen report sock = forever $ do
   bs <- NSB.recv sock 100000
   report (Ser.decode bs)
 
-tell :: IO Artnet.ArtCommand -> NS.SockAddr -> NS.Socket -> IO void
-tell next broadcast sock = forever $ do
-  cmd <- next
-  NSB.sendTo sock (Ser.encode cmd) broadcast
+tell :: IO (Either done Artnet.ArtCommand) -> NS.SockAddr -> NS.Socket -> IO done
+tell next broadcast sock = do
+  next >>= \case
+    Right cmd -> do
+        _sent <- NSB.sendTo sock (Ser.encode cmd) broadcast
+        tell next broadcast sock
+    Left done -> return done
 
 getAddr :: String -> IO NS.AddrInfo
 getAddr name = do
@@ -40,7 +43,7 @@ getAddr name = do
     [one] -> return one
     others -> fail $ "Expected precisely one network address, but found these: " ++ show others
 
-mkServers :: (Either String Artnet.ArtCommand -> IO ()) -> IO Artnet.ArtCommand -> String -> String -> IO (IO void, IO void)
+mkServers :: (Either String Artnet.ArtCommand -> IO ()) -> IO (Either done Artnet.ArtCommand) -> String -> String -> IO (IO void, IO done)
 mkServers receive send broadcastAddr localAddr = do
   broadcast <- getAddr broadcastAddr
   local <- getAddr localAddr

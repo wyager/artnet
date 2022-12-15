@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-partial-fields #-}
 module Main (main) where
 
 import qualified Control.Concurrent.Async as Async
@@ -17,7 +18,9 @@ packets = [poll, reply]
     poll = Artnet.ArtPoll Artnet.defaultArtPoll
     reply = Artnet.ArtPollReply Artnet.defaultArtPollReply
    
-data Opts = Opts {broadcastAddr :: String, localAddr :: String} deriving (Generic, Show, ParseRecord)
+data Opts = ServerLoop {broadcastAddr :: String, localAddr :: String} 
+          | Uniform {broadcastAddr :: String, localAddr :: String, power :: Double, cct :: Double} 
+          deriving (Generic, Show, ParseRecord)
 
 colorizer :: (Artnet.ArtCommand -> IO ()) -> IO void
 colorizer send = go $ cycle $ (Px.rounded . px) <$> temps
@@ -42,19 +45,43 @@ colorizer send = go $ cycle $ (Px.rounded . px) <$> temps
 
     
 
+serverLoop :: String -> String -> IO () 
+serverLoop broadcastAddr localAddr = do
+    chan <- Chan.newChan
+    (listener, teller) <- Server.mkServers (either putStrLn print) (Chan.readChan chan) broadcastAddr localAddr
+    mapM_ (Chan.writeChan chan . Right) packets
+    Async.withAsync (colorizer (Chan.writeChan chan . Right)) $ \colored -> 
+      Async.withAsync listener $ \listened -> do
+        Async.withAsync teller $ \told -> do
+          (_, err) <-
+            Async.waitAny
+              [ "Listener died" <$ listened,
+                "Teller died" <$ told,
+                "Colorizer died" <$ colored
+              ]
+          fail err
+
+uniform :: String -> String -> Double -> Double -> IO ()
+uniform broadcastAddr localAddr power cct = do
+    chan <- Chan.newChan
+    (_listener, teller) <- Server.mkServers (either putStrLn print) (Chan.readChan chan) broadcastAddr localAddr
+    let  
+        px :: Px.CCTRGBWPx Word8 Word16
+        px = Px.rounded $ Px.CCTRGBWPx @Double @Double (Px.Dimmer power) (Px.Temp cct) 0 0 (Px.RGBW 0 0 0 0)
+        zeros = repeat px
+        tube1 = take 16 zeros
+        tube2 = tube1
+        packet = case Data.finalize <$> (Data.add 0 tube1 Data.fresh >>= Data.add 256 tube2) of
+            Nothing -> error "Couldn't fit data in DMX packet"
+            Just pkt -> pkt
+        cmd = Artnet.ArtDMX $ Artnet.ArtDMX_ 0 0 0 packet
+    Chan.writeChan chan (Right cmd)
+    Chan.writeChan chan (Left ())
+    teller
+    
+
 main :: IO ()
-main = do
-  Opts {..} <- getRecord "Server"
-  chan <- Chan.newChan
-  (listener, teller) <- Server.mkServers (either putStrLn print) (Chan.readChan chan) broadcastAddr localAddr
-  mapM_ (Chan.writeChan chan) packets
-  Async.withAsync (colorizer (Chan.writeChan chan)) $ \colored -> 
-    Async.withAsync listener $ \listened -> do
-      Async.withAsync teller $ \told -> do
-        (_, err) <-
-          Async.waitAny
-            [ "Listener died" <$ listened,
-              "Teller died" <$ told,
-              "Colorizer died" <$ colored
-            ]
-        fail err
+main = getRecord "Server" >>= \case
+    ServerLoop {..} -> serverLoop broadcastAddr localAddr
+    Uniform {..} -> uniform broadcastAddr localAddr power cct
+      
