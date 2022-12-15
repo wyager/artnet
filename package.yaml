@@ -58,7 +58,7 @@ library:
   source-dirs: src
 
 executables:
-  artnet-exe:
+  anctl:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

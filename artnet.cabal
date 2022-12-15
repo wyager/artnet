@@ -56,7 +56,7 @@ library
     , network
   default-language: Haskell2010
 
-executable artnet-exe
+executable anctl
   main-is: Main.hs
   other-modules:
       Paths_artnet
