@@ -58,7 +58,7 @@ library:
   source-dirs: src
 
 executables:
-  anctl:
+  hart:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

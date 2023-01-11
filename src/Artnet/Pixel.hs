@@ -1,4 +1,4 @@
-module Artnet.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), cast, mapLo, rounded) where
+module Artnet.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), BrightnessTemperature(..), cast, mapLo, Roundable1, round1, Roundable2, round2) where
 
 import Data.Serialize (Serialize)
 import GHC.Generics (Generic)
@@ -35,15 +35,27 @@ data CCTRGBWPx lo hi = CCTRGBWPx (Dimmer hi) (Temp hi) (Tint hi) (Fader lo) (RGB
   deriving stock (Eq, Show, Functor, Generic)
   deriving anyclass (Serialize)
 
+data BrightnessTemperature precision = BrightnessTemperature (Dimmer precision) (Temp precision)
+  deriving stock (Eq, Show, Functor, Generic)
+  deriving anyclass (Serialize)
+
 mapLo :: (lo -> lo2) -> CCTRGBWPx lo hi -> CCTRGBWPx lo2 hi
 mapLo fun (CCTRGBWPx a b c d e) = CCTRGBWPx a b c (fmap fun d) e
 
 cast :: forall i o. (RealFrac i, Integral o, Bounded o) => i -> o
 cast x = round (x * fromIntegral (maxBound :: o))
 
-rounded ::
-  forall lo' hi' lo hi.
-  (RealFrac lo, RealFrac hi, Integral lo', Bounded lo', Integral hi', Bounded hi') =>
-  CCTRGBWPx lo hi ->
-  CCTRGBWPx lo' hi'
-rounded = fmap cast . mapLo cast
+class Roundable1 f where
+   round1 :: (RealFrac precision, Integral precision', Bounded precision') => f precision -> f precision' 
+
+class Roundable2 f where
+   round2 :: (RealFrac precision, Integral precision', Bounded precision') => f precision a -> f precision' a
+
+instance Roundable1 (CCTRGBWPx lo) where
+    round1 = fmap cast
+
+instance Roundable2 CCTRGBWPx where
+    round2 = mapLo cast 
+
+instance Roundable1 BrightnessTemperature where
+    round1 = fmap cast

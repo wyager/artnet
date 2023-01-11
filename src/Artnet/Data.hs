@@ -1,4 +1,4 @@
-module Artnet.Data (Outgoing, fresh, add, finalize) where
+module Artnet.Data (Outgoing, fresh, add, finalize, Raw(..)) where
 
 import Control.Monad (replicateM_, when)
 import Data.ByteString (ByteString)
@@ -11,6 +11,13 @@ import Artnet (Data (..))
 import Prelude hiding (head)
 
 newtype Outgoing = Outgoing (Map Int ByteString) deriving (Show)
+
+-- For if you want to slap some bytestrings directly into the outgoing data.
+-- Good for testing. Not a legal serialize instance.
+newtype Raw = Raw ByteString
+instance Serialize Raw where
+    put (Raw bytes) = Ser.putByteString bytes
+    get = return (Raw "")
 
 fresh :: Outgoing
 fresh = Outgoing Map.empty
