@@ -1,4 +1,4 @@
-module Artnet.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), BrightnessTemperature(..), cast, mapLo, Roundable1, round1, Roundable2, round2) where
+module Artnet.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), BrightnessTemperature (..), cast, mapLo, Roundable1, round1, Roundable2, round2) where
 
 import Data.Serialize (Serialize)
 import GHC.Generics (Generic)
@@ -46,16 +46,16 @@ cast :: forall i o. (RealFrac i, Integral o, Bounded o) => i -> o
 cast x = round (x * fromIntegral (maxBound :: o))
 
 class Roundable1 f where
-   round1 :: (RealFrac precision, Integral precision', Bounded precision') => f precision -> f precision' 
+  round1 :: (RealFrac precision, Integral precision', Bounded precision') => f precision -> f precision'
 
 class Roundable2 f where
-   round2 :: (RealFrac precision, Integral precision', Bounded precision') => f precision a -> f precision' a
+  round2 :: (RealFrac precision, Integral precision', Bounded precision') => f precision a -> f precision' a
 
 instance Roundable1 (CCTRGBWPx lo) where
-    round1 = fmap cast
+  round1 = fmap cast
 
 instance Roundable2 CCTRGBWPx where
-    round2 = mapLo cast 
+  round2 = mapLo cast
 
 instance Roundable1 BrightnessTemperature where
-    round1 = fmap cast
+  round1 = fmap cast

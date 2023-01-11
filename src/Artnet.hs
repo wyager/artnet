@@ -6,7 +6,7 @@ module Artnet
     ArtPollReply_ (..),
     ArtDMX_ (..),
     Data (..),
-    Universe (..)
+    Universe (..),
   )
 where
 

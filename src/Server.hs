@@ -1,9 +1,9 @@
 module Server (mkServers) where
 
+import qualified Artnet
 import qualified Control.Exception as E
 import Control.Monad (forever)
 import qualified Data.Serialize as Ser
-import qualified Artnet
 import qualified Network.Socket as NS
 import qualified Network.Socket.ByteString as NSB
 
@@ -27,8 +27,8 @@ tell :: IO (Either done Artnet.ArtCommand) -> NS.SockAddr -> NS.Socket -> IO don
 tell next broadcast sock = do
   next >>= \case
     Right cmd -> do
-        _sent <- NSB.sendTo sock (Ser.encode cmd) broadcast
-        tell next broadcast sock
+      _sent <- NSB.sendTo sock (Ser.encode cmd) broadcast
+      tell next broadcast sock
     Left done -> return done
 
 getAddr :: String -> IO NS.AddrInfo
