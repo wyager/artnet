@@ -13,7 +13,7 @@ import qualified Data.ByteString as BS
 import Data.Word (Word16, Word8)
 import GHC.Generics (Generic)
 import Options.Generic (ParseRecord, getRecord)
-import qualified Server
+import qualified Artnet.Server as Server
 
 packets :: [Artnet.ArtCommand]
 packets = [poll, reply]
