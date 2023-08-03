@@ -46,7 +46,7 @@ newtype Sequence = Sequence Word8
 
 newtype Physical = Physical Word8
   deriving newtype (Serialize, Num)
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 newtype UBEAVersion = UBEAVersion Word8
   deriving newtype (Serialize)
@@ -58,7 +58,7 @@ newtype DiagPriority = DiagPriority Word8
 
 newtype Universe = Universe Word16
   deriving (Serialize, Num) via U16LE
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 newtype TargetPortAddr = TargetPortAddr Word16
   deriving newtype (Serialize, Num)
