@@ -1,4 +1,4 @@
-module Artnet.Data (Outgoing, fresh, add, finalize, Raw (..)) where
+module Artnet.Data (Outgoing, fresh, add, addRaw, finalize, Raw (..)) where
 
 import Artnet (Data (..))
 import Control.Monad (replicateM_, when)
@@ -24,8 +24,11 @@ fresh :: Outgoing
 fresh = Outgoing Map.empty
 
 add :: (MonadFail m, Serialize pixel, Traversable f) => Int -> f pixel -> Outgoing -> m Outgoing
-add offset _ _ | offset < 0 = fail "Offset must be >=0"
-add offset pixels (Outgoing chunks) = do
+add i ps o = addRaw i (fmap Ser.encode ps) o
+
+addRaw :: (MonadFail m, Traversable f) => Int -> f ByteString -> Outgoing -> m Outgoing
+addRaw offset _ _ | offset < 0 = fail "Offset must be >=0"
+addRaw offset pixels (Outgoing chunks) = do
   case at of
     Nothing -> return ()
     Just _conflict -> fail $ "There is already a device starting at offset " ++ show offset
@@ -45,7 +48,7 @@ add offset pixels (Outgoing chunks) = do
   where
     (below, at, above) = Map.splitLookup offset chunks
     encoded :: ByteString
-    encoded = Ser.runPut $ mapM_ Ser.put pixels
+    encoded = Ser.runPut $ mapM_ Ser.putByteString pixels
 
 finalize :: Outgoing -> Data
 finalize (Outgoing chunks) = Data $ Ser.runPut $ go 0 (Map.toAscList chunks)
