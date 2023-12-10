@@ -1,8 +1,8 @@
-module Artnet.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), BrightnessTemperature (..), cast, mapLo, Roundable1, round1, Roundable2, round2, seven, Fan(..), Zero8(..), ForzaUltimate(..)) where
+module Artnet.Pixel (Dimmer (..), Temp (..), Tint (..), Fader (..), RGBW (..), Strobe (..), CCTRGBWPx (..), BrightnessTemperature (..), cast, mapLo, Roundable1, round1, Roundable2, round2, seven, Fan(..), Zero8(..), ForzaUltimate(..), GVM16(..)) where
 
 import Data.Serialize (Serialize (get, put), getWord8)
 import GHC.Generics (Generic)
-import Data.Word (Word8)
+import Data.Word (Word8, Word16)
 
 newtype Dimmer a = Dimmer a
   deriving newtype (Eq, Show, Num, Fractional, Serialize)
@@ -58,6 +58,11 @@ instance Serialize Fan where
 data ForzaUltimate = ForzaUltimate (Dimmer Word8) Zero8 {- Hard-code mode to CCT -} (Temp Word8) (Seven Zero8) Fan
   deriving stock (Eq, Show, Generic)
   deriving anyclass Serialize
+
+data GVM16 = GVM16CCT (Dimmer Word16) (Temp Word16) {- 2700-6800K -} Zero8 Zero8 Zero8 {- lock to CCT -} Fan Zero8 {- no strobe -}
+  deriving stock (Eq, Show, Generic)
+  deriving anyclass Serialize
+
 
 mapLo :: (lo -> lo2) -> CCTRGBWPx lo hi -> CCTRGBWPx lo2 hi
 mapLo fun (CCTRGBWPx a b c d e) = CCTRGBWPx a b c (fmap fun d) e
