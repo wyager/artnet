@@ -3,4 +3,4 @@
 Allows you to send Artnet/DMX512 commands from Haskell.
 
 
-Currently used by me for controlling some Pavotubes.
+Currently used by me for controlling some Pavotubes, Nanlights, and GVM lights
